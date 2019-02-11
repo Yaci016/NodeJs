@@ -1,0 +1,1 @@
+exports.Hello = () => 'Hello **world** !'
