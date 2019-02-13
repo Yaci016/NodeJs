@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Super chat</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      #content {
+        border: 1px solid black;
+        background: rgba(54, 52, 61, 0.534);
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Super Chat !</h1>
+
+    <p>
+      <input
+        type="text"
+        name="message"
+        id="message"
+        placeholder="Entrez votre message ici"
+      />
+      <input type="submit" value="Envoyer" id="envoyer" />
+    </p>
+    <div id="content"></div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      let message = document.querySelector("#message");
+      let buttonSend = document.querySelector("#envoyer");
+      let content = document.querySelector("#content");
+      let pseudo = prompt("votre pseudo ?");
+      let socket = io.connect("localhost:8080");
+      socket.emit("connection", "je suis co !");
+      socket.emit("pseudo", pseudo);
+      socket.on("message", message => {
+        content.innerHTML +=
+          "<p>" + message.message + message.pseudo + " ! </p>";
+      });
+      socket.on("messageChat",message => {
+          content.innerHTML += 
+          '<p>' +message+'</p>'
+      });
+      socket.on("premiereConnexion", message => {
+        console.log(message);
+        content.innerHTML += message
+      });
+      buttonSend.addEventListener("click", () => {
+        if (message.value != "") {
+          socket.emit("message", message.value);
+          message.value = "";
+        } else {
+          alert("ecrivez un message avant d'esseyer d'envoyer.");
+        }
+      });
+    </script>
+  </body>
+</html>
