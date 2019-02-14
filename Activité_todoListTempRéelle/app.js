@@ -1,33 +1,28 @@
-var express = require('express');
-var session = require('cookie-session'); // Charge le middleware de sessions
-var bodyParser = require('body-parser'); // Charge le middleware de gestion des paramètres
-var urlencodedParser = bodyParser.urlencoded({ extended: false });
+var app = require('express')(),
+    server = require('http').createServer(app),
+    io = require('socket.io').listen(server),
+    he = require('he'), // Permet de bloquer les caractères HTML (sécurité équivalente à htmlentities en PHP)
+    bodyParser = require('body-parser'), // Charge le middleware de gestion des paramètres
+    urlencodedParser = bodyParser.urlencoded({ extended: false });
+    
 
-var app = express();
-
-
-/* On utilise les sessions */
-app.use(session({secret: 'todotopsecret'}))
 
 
 /* S'il n'y a pas de todolist dans la session,
 on en crée une vide sous forme d'array avant la suite */
-.use(function(req, res, next){
-    if (typeof(req.session.todolist) == 'undefined') {
-        req.session.todolist = [];
-    }
-    next();
-})
-
+let object = {};
+if (typeof(object.todolist) === 'undefined') {
+    object.todolist = [];
+}
 /* On affiche la todolist et le formulaire */
-.get('/todo', function(req, res) { 
-    res.render('todo.ejs', {todolist: req.session.todolist});
+app.get('/todo', function(req, res) { 
+    res.render('todo.ejs', {todolist: object.todolist});
 })
 
 /* On ajoute un élément à la todolist */
 .post('/todo/ajouter/', urlencodedParser, function(req, res) {
     if (req.body.newtodo != '') {
-        req.session.todolist.push(req.body.newtodo);
+        object.todolist.push(req.body.newtodo);
     }
     res.redirect('/todo');
 })
@@ -35,7 +30,7 @@ on en crée une vide sous forme d'array avant la suite */
 /* Supprime un élément de la todolist */
 .get('/todo/supprimer/:id', function(req, res) {
     if (req.params.id != '') {
-        req.session.todolist.splice(req.params.id, 1);
+        object.todolist.splice(req.params.id, 1);
     }
     res.redirect('/todo');
 })
@@ -43,6 +38,6 @@ on en crée une vide sous forme d'array avant la suite */
 /* On redirige vers la todolist si la page demandée n'est pas trouvée */
 .use(function(req, res, next){
     res.redirect('/todo');
-})
+});
 
-.listen(8080);   
+server.listen(8080);   
