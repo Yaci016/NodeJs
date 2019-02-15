@@ -1,43 +1,44 @@
-var app = require('express')(),
-    server = require('http').createServer(app),
-    io = require('socket.io').listen(server),
-    he = require('he'), // Permet de bloquer les caractères HTML (sécurité équivalente à htmlentities en PHP)
-    bodyParser = require('body-parser'), // Charge le middleware de gestion des paramètres
-    urlencodedParser = bodyParser.urlencoded({ extended: false });
-    
-
-
+var app = require("express")(),
+  server = require("http").createServer(app),
+  io = require("socket.io").listen(server),
+  he = require("he"), // Permet de bloquer les caractères HTML (sécurité équivalente à htmlentities en PHP) j'utilise le mode he au lieu du module proposer dans le cours.
+  bodyParser = require("body-parser"), // Charge le middleware de gestion des paramètres
+  urlencodedParser = bodyParser.urlencoded({ extended: false });
 
 /* S'il n'y a pas de todolist dans la session,
 on en crée une vide sous forme d'array avant la suite */
 let object = {};
-if (typeof(object.todolist) === 'undefined') {
-    object.todolist = [];
+if (typeof object.todolist === "undefined") {
+  object.todolist = [];
 }
 /* On affiche la todolist et le formulaire */
-app.get('/todo', function(req, res) { 
-    res.render('todo.ejs', {todolist: object.todolist});
-})
+app
+  .get("/todo", function(req, res) {
+    res.render("todo.ejs", { todolist: object.todolist });
+  })
 
-/* On ajoute un élément à la todolist */
-.post('/todo/ajouter/', urlencodedParser, function(req, res) {
-    if (req.body.newtodo != '') {
-        object.todolist.push(req.body.newtodo);
-    }
-    res.redirect('/todo');
-})
+  /* On redirige vers la todolist si la page demandée n'est pas trouvée */
+  .use(function(req, res, next) {
+    res.redirect("/todo");
+  });
 
-/* Supprime un élément de la todolist */
-.get('/todo/supprimer/:id', function(req, res) {
-    if (req.params.id != '') {
-        object.todolist.splice(req.params.id, 1);
-    }
-    res.redirect('/todo');
-})
+  io.sockets.on('connection', socket => {
+        //Event qu'on on rajoute un element
+    socket.on('todo',todo=> {
+        if (todo != "") {
+            object.todolist.push(he.encode(todo));
+          }
+        socket.emit("actualisationTodoAFaire", { todolist: object.todolist });
+        socket.broadcast.emit("actualisationTodoAFaire", { todolist: object.todolist });
+      });
+        //Event qu'on on supprime un element
+    socket.on('delete',index=> {
+        if (index != "") {
+            object.todolist.splice(index, 1);
+          }
+        socket.emit("actualisationTodoAFaire", { todolist: object.todolist });
+        socket.broadcast.emit("actualisationTodoAFaire", { todolist: object.todolist });
+      });
 
-/* On redirige vers la todolist si la page demandée n'est pas trouvée */
-.use(function(req, res, next){
-    res.redirect('/todo');
-});
-
-server.listen(8080);   
+  })
+server.listen(8080);

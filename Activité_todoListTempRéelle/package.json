@@ -9,6 +9,6 @@
         "he": "^1.2.0",
         "socket.io": "^2.2.0"
     },
-    "author": "Mateo21 <mateo21@email.com>",
-    "description": "Un gestionnaire de todolist ultra basique"
+    "author": "Yaci016",
+    "description": "Une  todolist en temps réel"
 }

@@ -11,54 +11,48 @@
     <body>
         <h1>Ma todolist</h1>
 
-        <ul>
+        <ul id="todoWrapper">
         <% todolist.forEach(function(todo, index) { %>
-            <li><a href="/todo/supprimer/<%= index %>">✘</a> <%= todo %></li>
+            <li><a href="#" class="delete" data-id="<%= index %>">✘</a> <%= todo %></li>
         <% }); %>
         </ul>
-
-        <form action="/todo/ajouter/" method="post">
-            <p>
                 <label for="newtodo">Que dois-je faire ?</label>
                 <input type="text" name="newtodo" id="newtodo" autofocus />
-                <input type="submit" />
-            </p>
+                <input type="submit" id="envoyer" />
+            
         </form>
         <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
         <script src="/socket.io/socket.io.js"></script>
         <script>
-
             // Connexion à socket.io
-            var socket = io.connect('http://localhost:8080');
-
-            // On demande le pseudo, on l'envoie au serveur et on l'affiche dans le titre
-            var pseudo = prompt('Quel est votre pseudo ?');
-            socket.emit('nouveau_client', pseudo);
-            document.title = pseudo + ' - ' + document.title;
-
-            // Quand on reçoit un message, on l'insère dans la page
-            socket.on('message', function(data) {
-                insereMessage(data.pseudo, data.message)
-            })
-
-            // Quand un nouveau client se connecte, on affiche l'information
-            socket.on('nouveau_client', function(pseudo) {
-                $('#zone_chat').prepend('<p><em>' + pseudo + ' a rejoint le Chat !</em></p>');
-            })
+            let socket = io.connect('http://localhost:8080');
 
             // Lorsqu'on envoie le formulaire, on transmet le message et on l'affiche sur la page
-            $('#formulaire_chat').submit(function () {
-                var message = $('#message').val();
-                socket.emit('message', message); // Transmet le message aux autres
-                insereMessage(pseudo, message); // Affiche le message aussi sur notre page
-                $('#message').val('').focus(); // Vide la zone de Chat et remet le focus dessus
-                return false; // Permet de bloquer l'envoi "classique" du formulaire
+            $('#envoyer').click( (e) => {
+                var message = $('#newtodo').val();
+                socket.emit('todo', message); // Transmet le message aux autres
+                $('#newtodo').val('').focus(); // Vide la zone de Chat et remet le focus dessus
+                
             });
-            
-            // Ajoute un message dans la page
-            function insereMessage(pseudo, message) {
-                $('#zone_chat').prepend('<p><strong>' + pseudo + '</strong> ' + message + '</p>');
+            function RajoutEventListener() {
+                todoElements = document.querySelectorAll('.delete');
+                todoElements.forEach((elem) =>{
+                    elem.addEventListener('click',() => {
+                        let id = elem.dataset.id;
+                        socket.emit('delete', id);
+                    })
+                })
             }
+            RajoutEventListener();
+            //function qui s'occupe de reset l'affichage
+            socket.on('actualisationTodoAFaire',(todolist)=> {
+                $('#todoWrapper').empty();
+                todolist['todolist'].forEach(function(todo, index) {
+                    $('#todoWrapper').prepend('<li><a href="#" class="delete" data-id="'+index+'">✘</a>'+todo+'</li>')
+                });
+                //lorsqu'on supprime un element, on transmet un evenment pour actualiser la page
+                RajoutEventListener();
+            });
         </script>
     </body>
 </html>
